@@ -23,6 +23,10 @@ spec:
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
       {{- end }}
+{{- if .Values.sts.hostAliases }}
+      hostAliases:
+{{ toYaml .Values.sts.hostAliases | indent 8 }}
+{{- end }}
       serviceAccountName: {{ include "nifi-registry.serviceAccountName" . }}
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
@@ -46,7 +50,23 @@ spec:
             - name: "flow-storage"
               mountPath: /opt/nifi-registry/nifi-registry-current/flow_storage
               subPath: flow_storage
-        {{- end }}
+            {{- range $configmap := .Values.configmaps }}
+              {{- if $configmap.mountPath }}
+                {{- if $configmap.keys }}
+                  {{- range $key := $configmap.keys }}
+            - name: {{ include "nifi-registry.fullname" $ }}-{{ $configmap.name }}
+              mountPath: {{ $configmap.mountPath }}/{{ $key }}
+              subPath: {{ $key }}
+              readOnly: true
+                  {{- end }}
+                {{- else }}
+            - name: {{ include "nifi-registry.fullname" $ }}-{{ $configmap.name }}
+              mountPath: {{ $configmap.mountPath }}
+              readOnly: true
+                {{- end }}
+              {{- end }}
+            {{- end }}
+          {{- end }}
       containers:
         - name: {{ .Chart.Name }}
           securityContext:
@@ -371,6 +391,22 @@ spec:
               mountPath: /AuthConfConfigMap
               readOnly: true
             {{- /* if .Values.security.enabled */}}{{ end }}
+            {{- range $configmap := .Values.configmaps }}
+              {{- if $configmap.mountPath }}
+                {{- if $configmap.keys }}
+                  {{- range $key := $configmap.keys }}
+            - name: {{ include "apache-nifi.fullname" $ }}-{{ $configmap.name }}
+              mountPath: {{ $configmap.mountPath }}/{{ $key }}
+              subPath: {{ $key }}
+              readOnly: true
+                  {{- end }}
+                {{- else }}
+            - name: {{ include "apache-nifi.fullname" $ }}-{{ $configmap.name }}
+              mountPath: {{ $configmap.mountPath }}
+              readOnly: true
+                {{- end }}
+              {{- end }}
+            {{- end }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
           readinessProbe:
@@ -433,6 +469,12 @@ spec:
           secretName: {{ .Values.flowProvider.git.ssh.secretName }}
           defaultMode: 0444
       {{- /* if .Values.flowProvider.git.ssh.secretName */}}{{ end }}
+      - name: "authorizers-temp"
+        configMap:
+          name: {{ template "nifi-registry.fullname" . }}-config
+          items:
+            - key: "authorizers.xml"
+              path: "authorizers.temp"
       - name: ssh-known-hosts
       {{- if .Values.flowProvider.git.ssh.known_hosts }}
         configMap:
