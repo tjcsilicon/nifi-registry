@@ -276,3 +276,5 @@ oidc:
   readTimeout: "5 secs"
   # OIDC Claim Groups
   claimGroups: groups
+  # OIDC Additional Scopes
+  additionalScopes: "groups"

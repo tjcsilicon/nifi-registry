@@ -184,6 +184,8 @@ spec:
               prop_replace nifi.registry.security.user.oidc.connect.timeout "{{ .Values.oidc.connectTimeout }}"
               prop_replace nifi.registry.security.user.oidc.read.timeout "{{ .Values.oidc.readTimeout }}"
               prop_replace nifi.registry.security.user.oidc.claim.groups {{ .Values.oidc.claimGroups }}
+              prop_replace nifi.registry.security.user.oidc.claim.groups {{ .Values.oidc.claimGroups }}
+              prop_replace nifi.registry.security.user.oidc.additional.scopes {{ .Values.oidc.additionalScopes }}
           {{- /* if .Values.oidc.enabled */}}{{ end }}
 
           {{ if .Values.security.enabled }}
