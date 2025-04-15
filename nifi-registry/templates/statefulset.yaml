@@ -34,39 +34,6 @@ spec:
       {{/* Need to restart pod when TLS certificate is updated */}}
       shareProcessNamespace: true
       {{- /* if .Values.certManager.enabled */}}{{ end }}
-      initContainers:
-        {{- if .Values.persistence.enabled }}
-        - name: take-data-dir-ownership
-          image: "{{ .Values.initContainers.alpine.image }}:{{ .Values.initContainers.alpine.tag }}"
-          command:
-            - chown
-            - -R
-            - 1000:1000
-            - /opt/nifi-registry/nifi-registry-current/database
-            - /opt/nifi-registry/nifi-registry-current/flow_storage
-          volumeMounts:
-            - name: "database"
-              mountPath: /opt/nifi-registry/nifi-registry-current/database
-            - name: "flow-storage"
-              mountPath: /opt/nifi-registry/nifi-registry-current/flow_storage
-              subPath: flow_storage
-            {{- range $configmap := .Values.configmaps }}
-              {{- if $configmap.mountPath }}
-                {{- if $configmap.keys }}
-                  {{- range $key := $configmap.keys }}
-            - name: {{ include "nifi-registry.fullname" $ }}-{{ $configmap.name }}
-              mountPath: {{ $configmap.mountPath }}/{{ $key }}
-              subPath: {{ $key }}
-              readOnly: true
-                  {{- end }}
-                {{- else }}
-            - name: {{ include "nifi-registry.fullname" $ }}-{{ $configmap.name }}
-              mountPath: {{ $configmap.mountPath }}
-              readOnly: true
-                {{- end }}
-              {{- end }}
-            {{- end }}
-          {{- end }}
       containers:
         - name: {{ .Chart.Name }}
           securityContext:
